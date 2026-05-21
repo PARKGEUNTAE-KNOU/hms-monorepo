@@ -1,0 +1,112 @@
+package app.security;
+
+import app.auth.oauth.handler.OAuth2AuthenticationFailureHandler;
+import app.auth.oauth.handler.OAuth2AuthenticationSuccessHandler;
+import app.security.MenuAccessFilter;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+@Configuration
+public class SecurityConfig {
+
+    private static final String[] MEDICAL_SUPPORT_ROLES = {
+            "ADMIN",
+            "DOCTOR",
+            "NURSE",
+            "RADIOLOGY_TECH",
+            "CLINICAL_LAB_TECH",
+            "PATHOLOGY_COORDINATOR",
+            "ENDOSCOPY_COORDINATOR",
+            "PHYSIOLOGY_TEST_COORDINATOR"
+    };
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ServerRoleFilter serverRoleFilter;
+    private final MenuAccessFilter menuAccessFilter;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          ServerRoleFilter serverRoleFilter,
+                          MenuAccessFilter menuAccessFilter,
+                          OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
+                          OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.serverRoleFilter = serverRoleFilter;
+        this.menuAccessFilter = menuAccessFilter;
+        this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
+        this.oAuth2AuthenticationFailureHandler = oAuth2AuthenticationFailureHandler;
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .cors(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .exceptionHandling(ex -> ex.defaultAuthenticationEntryPointFor(
+                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                        new AntPathRequestMatcher("/api/**")
+                ))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/api/auth/refresh",
+                                "/api/auth/register",
+                                "/api/auth/register/**",
+                                "/api/auth/oauth/**",
+                                "/oauth2/**",
+                                "/login/oauth2/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/api-docs/**",
+                                "/v3/api-docs/**"
+                        ).permitAll()
+                        .requestMatchers("/api/auth/email/**", "/api/auth/me", "/api/auth/logout").authenticated()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/menus").authenticated()
+                        .requestMatchers("/api/admin/permissions/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/jpa/training/certificates/verify").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/jpa/training/*/complete").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/jpa/training/*/completed-members").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/jpa/training/*/members").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/jpa/training/*/members/*/status").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/medical/**").hasAnyRole(MEDICAL_SUPPORT_ROLES)
+                        .requestMatchers("/api/medical/**").hasAnyRole(MEDICAL_SUPPORT_ROLES)
+                        .requestMatchers("/api/jpa/departments/**", "/api/jpa/positions/**").hasRole("ADMIN")
+                        .requestMatchers("/api/jpa/staff-credentials/**").hasAnyRole(MEDICAL_SUPPORT_ROLES)
+                        .requestMatchers("/api/jpa/staff-change-requests/**").hasRole("ADMIN")
+                        .requestMatchers("/api/jpa/staff-audit-logs/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/jpa/medical-staff/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/jpa/medical-staff/me").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/jpa/medical-staff/me/photo").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/jpa/medical-staff/me/password").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/jpa/medical-staff/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/jpa/medical-staff/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/jpa/medical-staff/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/jpa/medical-staff/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/jpa/medical-staff/**").authenticated()
+                        .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
+                )
+                .addFilterBefore(serverRoleFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(jwtAuthenticationFilter, ServerRoleFilter.class)
+                .addFilterAfter(menuAccessFilter, JwtAuthenticationFilter.class);
+
+        return http.build();
+    }
+}

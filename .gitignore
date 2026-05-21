@@ -1,0 +1,33 @@
+# Gradle
+.gradle/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Claude Code
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Build output jars (covered by **/build/ above)
+
+# Environment / secrets
+*.env
+.env*
+application-prod.properties
+application-prod.yml
+application-local.properties
+application-local.yml
