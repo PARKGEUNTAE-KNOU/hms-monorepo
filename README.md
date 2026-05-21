@@ -1,46 +1,72 @@
-# HMS 통합본 모노레포 (Composite Gradle)
+# HIS 모노레포 (Hospital Information System)
 
-이 폴더는 각 서비스를 **한 워크스페이스/한 루트**에서 다루기 위한 모노레포 루트입니다.
-현재 단계에서는 각 서비스의 기존 Gradle 구성을 유지한 채, 루트에서 호출할 수 있도록 **Composite Build (`includeBuild`)** 로 묶었습니다.
+7개 마이크로서비스를 단일 Gradle Composite Build로 관리하는 모노레포입니다.
 
-## 포함된 서비스
+## 서비스 구성
 
-- `auth_service`
-- `staff_service`
-- `patient_service`
-- `reception_service`
-- `clinical_service`
-- `clinicSupport_service`
-- `billing_service`
+| 서비스 | 디렉토리 | 포트 | 설명 |
+|---|---|---|---|
+| 인증 | `microservices/auth-service` | - | JWT 인증, OAuth2, 직원 계정 관리 |
+| 직원 | `microservices/staff-service` | - | 의료진·직원 정보 관리 |
+| 환자 | `microservices/patient-service` | - | 환자 등록, 동의서, 코드 관리 |
+| 접수 | `microservices/reception-service` | - | 외래 접수·예약 관리 |
+| 진료 | `microservices/clinical-service` | - | 진료 기록, SOAP 노트, 처방 |
+| 임상지원 | `microservices/clinic-support-service` | - | 검사 실행, 간호 처치, 청구 연동 |
+| 청구 | `microservices/billing-service` | - | 보험 청구, 결제(Toss) |
 
-## 빠른 사용법
+공통 유틸리티는 `util/` 모듈에서 관리합니다 (`ApiResponse` 등).
 
-현재 루트에는 Gradle Wrapper(`gradlew`)를 아직 두지 않았습니다.
-대신 **아무 서비스의 `gradlew.bat`로 루트를 실행**할 수 있습니다(권장: `billing_service`).
+## 기술 스택
 
-루트(`c:\dev\HMS\통합본`) 작업 예시:
+- **Java 17** / **Spring Boot 3.4.2**
+- **Spring Security 6**, **Spring Data JPA**, **MyBatis**
+- **Oracle DB**, **Redis**, **Kafka**
+- **Gradle 8.x** Composite Build
 
-- 전체 빌드:
+## 빠른 시작
 
-```bash
-.\billing_service\gradlew.bat -p . buildAll
-```
-
-- 특정 서비스만 빌드:
-
-```bash
-.\billing_service\gradlew.bat -p . billingBuild
-```
-
-- 전체 테스트:
+루트에서 Gradle Wrapper로 실행합니다.
 
 ```bash
-.\billing_service\gradlew.bat -p . testAll
+# 전체 빌드
+./gradlew buildAll
+
+# 전체 테스트
+./gradlew testAll
+
+# 특정 서비스만 빌드
+./gradlew patientBuild
+./gradlew authBuild
+./gradlew staffBuild
+./gradlew receptionBuild
+./gradlew clinicalBuild
+./gradlew clinicSupportBuild
+./gradlew billingBuild
 ```
 
-## 다음 단계(예정)
+## 로컬 인프라 기동
 
-- 공통 코드(`ApiResponse`, 공통 예외/이벤트 모델 등)를 `libs/*`로 분리해 중복 제거
-- 로컬 통합 기동을 위한 `docker-compose.yml`을 루트로 승격(서비스별 compose를 정리/통합)
-- Kubernetes 배포 표준(Helm/Kustomize) 디렉터리 도입
+```bash
+docker-compose up -d
+```
 
+Oracle DB, Redis, Kafka 등 의존 인프라를 Docker로 실행합니다.
+
+## 프로젝트 구조
+
+```
+HIS/
+├── build.gradle              # 루트 빌드 (buildAll, testAll 태스크)
+├── settings.gradle           # Composite Build 설정
+├── docker-compose.yml        # 로컬 인프라
+├── util/                     # 공통 유틸 모듈
+│   └── src/main/java/com/hms/util/
+└── microservices/
+    ├── auth-service/
+    ├── staff-service/
+    ├── patient-service/
+    ├── reception-service/
+    ├── clinical-service/
+    ├── clinic-support-service/
+    └── billing-service/
+```
