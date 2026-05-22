@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Tag(name = "선수금(Billing Deposits)", description = "환자 기준 선수금 등록 및 조회 API")
-@CrossOrigin(origins = "http://localhost:3001")
 @RestController
 @RequestMapping("/api/billing/deposits")
 public class BillingDepositController {

@@ -8,7 +8,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/billing/payment-methods")
-@CrossOrigin(origins = "http://localhost:3001")
 public class PaymentMethodController {
 
     private final PaymentMethodService service;

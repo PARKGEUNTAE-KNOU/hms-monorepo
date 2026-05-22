@@ -18,7 +18,6 @@ import java.util.List;
         name = "수납/결제(Payments)",
         description = "수납 생성/취소, 부분 환불, 청구 기준 결제 내역 조회 API"
 )
-@CrossOrigin(origins = "http://localhost:3001")
 @RestController
 @RequestMapping("/api/billing/payments")
 public class PaymentController {

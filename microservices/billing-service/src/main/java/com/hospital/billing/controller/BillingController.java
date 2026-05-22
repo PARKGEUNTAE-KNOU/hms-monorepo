@@ -25,7 +25,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Tag(name = "청구/통계(Billing)", description = "청구 상세, 상태 변경, 목록, 항목, 이력, 통계 조회 API")
-@CrossOrigin(origins = "http://localhost:3001")
 @RestController
 @RequestMapping("/api/billing")
 public class BillingController {

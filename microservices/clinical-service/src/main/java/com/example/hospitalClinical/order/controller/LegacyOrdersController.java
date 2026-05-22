@@ -26,13 +26,6 @@ public class LegacyOrdersController {
 
     private final OrderVisitService orderVisitService;
 
-    @CrossOrigin(origins = {
-            "http://localhost:3000",
-            "http://localhost:3001",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:3001",
-            "http://localhost:5173"
-    })
     @GetMapping
     public ResponseEntity<ApiResponse<List<OrderResponse>>> list(
             @RequestParam("visitId") Long visitId,
@@ -50,13 +43,6 @@ public class LegacyOrdersController {
         }
     }
 
-    @CrossOrigin(origins = {
-            "http://localhost:3000",
-            "http://localhost:3001",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:3001",
-            "http://localhost:5173"
-    })
     @PostMapping
     public ResponseEntity<ApiResponse<OrderResponse>> create(@RequestBody @Valid VisitOrderCreateRequest body) {
         log.warn("[DEPRECATED] POST /api/orders — use POST /api/visits/{visitId}/orders");
@@ -71,13 +57,6 @@ public class LegacyOrdersController {
                 .body(new ApiResponse<>(true, "처방(오더) 등록 성공 (deprecated API)", result));
     }
 
-    @CrossOrigin(origins = {
-            "http://localhost:3000",
-            "http://localhost:3001",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:3001",
-            "http://localhost:5173"
-    })
     @PatchMapping("/{orderId}/items/{orderItemId}")
     public ResponseEntity<ApiResponse<OrderItemResponse>> updateItem(
             @RequestParam("visitId") Long visitId,
@@ -91,13 +70,6 @@ public class LegacyOrdersController {
                 .body(new ApiResponse<>(true, "처방 항목 수정 성공 (deprecated API)", updated));
     }
 
-    @CrossOrigin(origins = {
-            "http://localhost:3000",
-            "http://localhost:3001",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:3001",
-            "http://localhost:5173"
-    })
     @DeleteMapping("/{orderId}/items/{orderItemId}")
     public ResponseEntity<ApiResponse<Void>> deleteItem(
             @RequestParam("visitId") Long visitId,
